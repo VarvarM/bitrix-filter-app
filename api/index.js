@@ -152,13 +152,22 @@ BX24.init(function () {
     var status = document.getElementById('status');
     status.textContent = 'Назначаем исполнителя...';
 
-    BX24.callMethod('tasks.task.update', {
-        taskId: taskId,
-        fields: {
-            RESPONSIBLE_ID: u.id
-        }
-    }, function () {
-        status.textContent = 'Исполнитель: ' + (u.name || u.id);
+    BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
+        var task = res.data().task;
+
+        var auditors = (task.auditors || []).filter(id => id != u.id);
+        var accomplices = (task.accomplices || []).filter(id => id != u.id);
+
+        BX24.callMethod('tasks.task.update', {
+            taskId: taskId,
+            fields: {
+                RESPONSIBLE_ID: u.id,
+                AUDITORS: auditors,
+                ACCOMPLICES: accomplices
+            }
+        }, function () {
+            status.textContent = 'Исполнитель назначен: ' + (u.name || u.id);
+        });
     });
 };
 

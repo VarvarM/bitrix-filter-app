@@ -8,6 +8,20 @@ export default async function handler(req, res) {
         return;
     }
 
+    if (req.query.action === 'getUsers') {
+    const ids = req.query.ids; // строка "102,5,8"
+    const webhookUrl = process.env.BITRIX_WEBHOOK;
+    try {
+        const response = await fetch(webhookUrl + 'user.get.json?ID=' + ids);
+        const data = await response.json();
+        res.status(200).json(data);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+    return;
+}
+
+    
     // API: получить участников группы
     if (req.query.action === 'getGroupUsers') {
         const groupId = req.query.groupId;

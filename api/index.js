@@ -138,35 +138,47 @@ BX24.init(function () {
     li.style.display = 'flex';
     li.style.alignItems = 'center';
     li.style.justifyContent = 'space-between';
-    li.style.padding = '6px 0';
-    li.style.borderBottom = '1px solid #eee';
+    li.style.padding = '10px 0';
+    li.style.borderBottom = '1px solid #f0f0f0';
 
     var name = document.createElement('span');
     name.textContent = u.name || u.id;
     name.style.fontSize = '14px';
+    name.style.color = '#333';
 
     var actions = document.createElement('div');
     actions.style.display = 'flex';
-    actions.style.gap = '6px';
+    actions.style.gap = '8px';
 
-    function createBtn(text) {
+    function createBtn(text, type) {
         var btn = document.createElement('button');
         btn.textContent = text;
-        btn.style.padding = '4px 8px';
-        btn.style.fontSize = '12px';
-        btn.style.border = '1px solid #ccc';
-        btn.style.borderRadius = '4px';
+
+        btn.style.padding = '6px 10px';
+        btn.style.fontSize = '13px';
+        btn.style.borderRadius = '6px';
         btn.style.cursor = 'pointer';
-        btn.style.background = '#f5f5f5';
+        btn.style.border = 'none';
+
+        // цвета как в Bitrix
+        if (type === 'primary') {
+            btn.style.background = '#2fc6f6';
+            btn.style.color = '#fff';
+        } else {
+            btn.style.background = '#f5f7fa';
+            btn.style.color = '#333';
+        }
+
         return btn;
     }
 
-    var btnResp = createBtn('Исп.');
-    var btnObs = createBtn('Набл.');
-    var btnAcc = createBtn('Соисп.');
+    var btnResp = createBtn('Исполнитель', 'primary');
+    var btnObs = createBtn('Наблюдатель');
+    var btnAcc = createBtn('Соисполнитель');
 
     var status = document.getElementById('status');
 
+    // 👤 Исполнитель
     btnResp.onclick = function () {
         status.textContent = 'Назначаем исполнителя...';
 
@@ -189,6 +201,7 @@ BX24.init(function () {
         });
     };
 
+    // 👁 Наблюдатель
     btnObs.onclick = function () {
         status.textContent = 'Добавляем в наблюдатели...';
 
@@ -211,6 +224,7 @@ BX24.init(function () {
         });
     };
 
+    // 🤝 Соисполнитель
     btnAcc.onclick = function () {
         status.textContent = 'Добавляем в соисполнители...';
 

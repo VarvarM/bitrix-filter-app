@@ -1,40 +1,28 @@
 BX24.init(function() {
+    // Регистрируем плейсмент
+    BX24.callMethod(
+        'placement.bind',
+        {
+            PLACEMENT: 'TASK_VIEW_TAB',
+            HANDLER: 'https://varvarm.github.io/bitrix-filter-app/',
+            TITLE: 'Участники проекта'
+        },
+        function(result) {
+            console.log('placement.bind result:', result.data(), result.error());
+        }
+    );
+
     var placement = BX24.placement.info();
     var groupId = placement.options ? placement.options.GROUP_ID : null;
 
     if (!groupId) {
-        document.getElementById('userList').innerHTML = 
-            '<div style="padding:8px;color:red">Откройте приложение из карточки проекта</div>';
+        document.getElementById('userList').innerHTML =
+            '<div style="padding:8px;color:#999">Плейсмент зарегистрирован. Откройте любую задачу проекта — появится вкладка "Участники проекта"</div>';
         return;
     }
 
-    BX24.callMethod(
-        'socialnetwork.api.workgroup.getusers',
-        { groupId: groupId, filterId: 'A' },
-        function(result) {
-            if (result.error()) {
-                document.getElementById('userList').innerHTML = 
-                    '<div style="padding:8px;color:red">Ошибка: ' + result.error() + '</div>';
-                return;
-            }
-
-            var users = result.data();
-            if (!users || users.length === 0) {
-                document.getElementById('userList').innerHTML = 
-                    '<div style="padding:8px;color:#999">Участники не найдены</div>';
-                return;
-            }
-
-            window.allUsers = users.map(function(u) {
-                return {
-                    id: u.USER_ID || u.ID,
-                    name: (u.NAME || '') + ' ' + (u.LAST_NAME || '')
-                };
-            });
-
-            renderUsers(window.allUsers);
-        }
-    );
+    document.getElementById('search').style.display = 'block';
+    loadGroupMembers(groupId);
 });
 
 function renderUsers(users) {

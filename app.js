@@ -1,4 +1,12 @@
+function getAppSid() {
+    var params = new URLSearchParams(window.location.search);
+    return params.get('APP_SID');
+}
+
 BX24.init(function() {
+    var appSid = getAppSid();
+    console.log('APP_SID:', appSid);
+    
     var placement = BX24.placement.info();
     console.log('placement info:', JSON.stringify(placement));
     
@@ -11,14 +19,13 @@ BX24.init(function() {
     console.log('taskId:', taskId, 'groupId:', groupId);
     
     if (!groupId && taskId) {
-        // Получаем groupId через taskId
         BX24.callMethod('tasks.task.get', {
             taskId: taskId,
             select: ['GROUP_ID']
         }, function(result) {
             if (result.error()) {
                 document.getElementById('userList').innerHTML = 
-                    '<div style="padding:8px;color:red">Ошибка: ' + result.error() + '</div>';
+                    '<div style="padding:8px;color:red">Ошибка получения задачи: ' + result.error() + '</div>';
                 return;
             }
             var task = result.data().task;
@@ -40,17 +47,19 @@ BX24.init(function() {
 });
 
 function loadGroupMembers(groupId) {
-    BX24.callMethod(
-        'user.get',
-        { FILTER: { SONET_GROUP_ID: groupId } },
-        function(result) {
-            if (result.error()) {
+    var appSid = getAppSid();
+    var domain = 'inshkola.bitrix24.ru';
+    
+    fetch('https://' + domain + '/rest/sonet_group.user.get.json?auth=' + appSid + '&ID=' + groupId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            console.log('sonet response:', data);
+            if (data.error) {
                 document.getElementById('userList').innerHTML = 
-                    '<div style="padding:8px;color:red">Ошибка: ' + result.error() + '</div>';
+                    '<div style="padding:8px;color:red">Ошибка: ' + data.error_description + '</div>';
                 return;
             }
-            var users = result.data();
-            console.log('users:', users);
+            var users = data.result;
             if (!users || users.length === 0) {
                 document.getElementById('userList').innerHTML = 
                     '<div style="padding:8px;color:#999">Участники не найдены</div>';
@@ -58,14 +67,17 @@ function loadGroupMembers(groupId) {
             }
             window.allUsers = users.map(function(u) {
                 return {
-                    id: u.ID,
+                    id: u.USER_ID,
                     name: ((u.NAME || '') + ' ' + (u.LAST_NAME || '')).trim()
                 };
             });
             document.getElementById('search').style.display = 'block';
             renderUsers(window.allUsers);
-        }
-    );
+        })
+        .catch(function(e) {
+            document.getElementById('userList').innerHTML = 
+                '<div style="padding:8px;color:red">Ошибка запроса: ' + e.message + '</div>';
+        });
 }
 
 function renderUsers(users) {

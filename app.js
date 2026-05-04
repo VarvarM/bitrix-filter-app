@@ -1,19 +1,16 @@
 BX24.init(function() {
-    // Регистрируем плейсмент
-    BX24.callMethod(
-        'placement.bind',
-        {
-            PLACEMENT: 'TASK_VIEW_TAB',
-            HANDLER: 'https://varvarm.github.io/bitrix-filter-app/',
-            TITLE: 'Участники проекта'
-        },
-        function(result) {
-            console.log('placement.bind result:', result.data(), result.error());
-        }
-    );
+    BX24.callMethod('placement.bind', {
+        PLACEMENT: 'TASK_VIEW_TAB',
+        HANDLER: 'https://bitrix-filter-app.vercel.app/api/index',
+        TITLE: 'Участники проекта'
+    }, function(result) {
+        console.log('placement.bind result:', result.data(), result.error());
+    });
 
     var placement = BX24.placement.info();
     var groupId = placement.options ? placement.options.GROUP_ID : null;
+
+    window.allUsers = [];
 
     if (!groupId) {
         document.getElementById('userList').innerHTML =

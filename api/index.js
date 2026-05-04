@@ -103,26 +103,11 @@ export default async function handler(req, res) {
                 fetch('/api/index?action=getGroupUsers&groupId=' + groupId)
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
-                        var users = data.result || [];
-                        var list = document.getElementById('userList');
-                        var statusEl = document.getElementById('status');
-
-                        if (!users.length) {
-                            statusEl.textContent = 'Участников не найдено.';
-                            return;
-                        }
-
-                        statusEl.textContent = 'Найдено участников: ' + users.length;
-
-                        users.forEach(function (u) {
-                            var li = document.createElement('li');
-                            var name = (u.NAME || '') + ' ' + (u.LAST_NAME || '');
-                            li.textContent = name.trim() || u.USER_ID || u.ID || '—';
-                            list.appendChild(li);
-                        });
+                        // ВРЕМЕННО: показать сырые данные
+                        document.getElementById('status').textContent = JSON.stringify(data).substring(0, 500);
                     })
                     .catch(function (err) {
-                        document.getElementById('status').innerHTML = '<span class="error">Ошибка загрузки: ' + err.message + '</span>';
+                    document.getElementById('status').innerHTML = '<span class="error">Ошибка: ' + err.message + '</span>';
                     });
             });
         });

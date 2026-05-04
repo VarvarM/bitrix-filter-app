@@ -41,8 +41,8 @@ BX24.init(function() {
 
 function loadGroupMembers(groupId) {
     BX24.callMethod(
-        'sonet_group.user.get',
-        { ID: groupId },
+        'user.get',
+        { FILTER: { SONET_GROUP_ID: groupId } },
         function(result) {
             if (result.error()) {
                 document.getElementById('userList').innerHTML = 
@@ -58,7 +58,7 @@ function loadGroupMembers(groupId) {
             }
             window.allUsers = users.map(function(u) {
                 return {
-                    id: u.USER_ID,
+                    id: u.ID,
                     name: ((u.NAME || '') + ' ' + (u.LAST_NAME || '')).trim()
                 };
             });

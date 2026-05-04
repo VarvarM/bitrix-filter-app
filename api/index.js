@@ -34,16 +34,19 @@ export default async function handler(req, res) {
             // 2. Собираем ID пользователей
             const ids = members.map(m => m.USER_ID);
 
-            // ⚠️ Bitrix иногда требует формат ID[]=1&ID[]=2
-            const query = ids.map(id => 'ID[]=' + id).join('&');
+            // 3. Получаем пользователей ПО ОДНОМУ (фикс бага Bitrix)
+            const users = [];
 
-            // 3. Получаем пользователей
-            const usersRes = await fetch(
-                webhookUrl + 'user.get.json?' + query
-            );
-            const usersData = await usersRes.json();
-            const users = usersData.result || [];
+            for (const id of ids) {
+                const r = await fetch(
+                    webhookUrl + 'user.get.json?ID=' + id
+                );
+                const d = await r.json();
 
+                if (d.result && d.result[0]) {
+                    users.push(d.result[0]);
+                }
+            }
             // 4. Нормализуем ответ (чистый массив)
             const result = users.map(u => ({
                 id: u.ID,

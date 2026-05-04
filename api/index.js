@@ -101,14 +101,41 @@ export default async function handler(req, res) {
 
                 // Запрашиваем участников проекта через наш бэкенд
                 fetch('/api/index?action=getGroupUsers&groupId=' + groupId)
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        // ВРЕМЕННО: показать сырые данные
-                        document.getElementById('status').textContent = JSON.stringify(data).substring(0, 500);
-                    })
-                    .catch(function (err) {
-                    document.getElementById('status').innerHTML = '<span class="error">Ошибка: ' + err.message + '</span>';
-                    });
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        var members = data.result || [];
+        var statusEl = document.getElementById('status');
+        var list = document.getElementById('userList');
+
+        if (!members.length) {
+            statusEl.textContent = 'Участников не найдено.';
+            return;
+        }
+
+        // Собираем массив USER_ID
+        var userIds = members.map(function (m) { return m.USER_ID; });
+
+        // Второй запрос — получаем имена
+        BX24.callMethod('user.get', { ID: userIds }, function (userResult) {
+            if (userResult.error()) {
+                statusEl.innerHTML = '<span class="error">Ошибка получения пользователей: ' + userResult.error() + '</span>';
+                return;
+            }
+
+            var users = userResult.data();
+            statusEl.textContent = 'Найдено участников: ' + users.length;
+
+            users.forEach(function (u) {
+                var li = document.createElement('li');
+                var name = ((u.NAME || '') + ' ' + (u.LAST_NAME || '')).trim();
+                li.textContent = name || u.ID || '—';
+                list.appendChild(li);
+            });
+        });
+    })
+    .catch(function (err) {
+        document.getElementById('status').innerHTML = '<span class="error">Ошибка: ' + err.message + '</span>';
+    });
             });
         });
     </script>

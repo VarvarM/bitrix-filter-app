@@ -163,44 +163,50 @@ BX24.init(function () {
 };
 
     btnObs.onclick = function () {
-        BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
-            var task = res.data().task;
-            var auditors = task.auditors || [];
+    var status = document.getElementById('status');
+    status.textContent = 'Добавляем в наблюдатели...';
 
-            if (!auditors.includes(u.id)) {
-                auditors.push(u.id);
+    BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
+        var task = res.data().task;
+        var auditors = task.auditors || [];
+
+        if (!auditors.includes(u.id)) {
+            auditors.push(u.id);
+        }
+
+        BX24.callMethod('tasks.task.update', {
+            taskId: taskId,
+            fields: {
+                AUDITORS: auditors
             }
-
-            BX24.callMethod('tasks.task.update', {
-                taskId: taskId,
-                fields: {
-                    AUDITORS: auditors
-                }
-            }, function () {
-                alert('Добавлен в наблюдатели');
-            });
+        }, function () {
+            status.textContent = 'Наблюдатель: ' + (u.name || u.id);
         });
-    };
+    });
+};
 
     btnAcc.onclick = function () {
-        BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
-            var task = res.data().task;
-            var accomplices = task.accomplices || [];
+    var status = document.getElementById('status');
+    status.textContent = 'Добавляем в соисполнители...';
 
-            if (!accomplices.includes(u.id)) {
-                accomplices.push(u.id);
+    BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
+        var task = res.data().task;
+        var accomplices = task.accomplices || [];
+
+        if (!accomplices.includes(u.id)) {
+            accomplices.push(u.id);
+        }
+
+        BX24.callMethod('tasks.task.update', {
+            taskId: taskId,
+            fields: {
+                ACCOMPLICES: accomplices
             }
-
-            BX24.callMethod('tasks.task.update', {
-                taskId: taskId,
-                fields: {
-                    ACCOMPLICES: accomplices
-                }
-            }, function () {
-                alert('Добавлен в соисполнители');
-            });
+        }, function () {
+            status.textContent = 'Соисполнитель: ' + (u.name || u.id);
         });
-    };
+    });
+};
 
     li.appendChild(name);
     li.appendChild(document.createElement('br'));

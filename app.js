@@ -47,10 +47,9 @@ BX24.init(function() {
 });
 
 function loadGroupMembers(groupId) {
-    var appSid = getAppSid();
-    var domain = 'inshkola.bitrix24.ru';
+    var webhookUrl = 'https://inshkola.bitrix24.ru/rest/YOUR_WEBHOOK_TOKEN/';
     
-    fetch('https://' + domain + '/rest/sonet_group.user.get.json?auth=' + appSid + '&ID=' + groupId)
+    fetch(webhookUrl + 'sonet_group.user.get.json?ID=' + groupId)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             console.log('sonet response:', data);
@@ -73,10 +72,6 @@ function loadGroupMembers(groupId) {
             });
             document.getElementById('search').style.display = 'block';
             renderUsers(window.allUsers);
-        })
-        .catch(function(e) {
-            document.getElementById('userList').innerHTML = 
-                '<div style="padding:8px;color:red">Ошибка запроса: ' + e.message + '</div>';
         });
 }
 

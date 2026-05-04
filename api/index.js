@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     // Иначе возвращаем index.html
     const { readFileSync } = await import('fs');
     const { join } = await import('path');
-    const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
+    const html = readFileSync(join(process.cwd(), 'public', 'index.html'), 'utf8');
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(html);
 }

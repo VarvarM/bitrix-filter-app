@@ -47,7 +47,7 @@ BX24.init(function() {
 });
 
 function loadGroupMembers(groupId) {
-    var webhookUrl = 'https://inshkola.bitrix24.ru/rest/YOUR_WEBHOOK_TOKEN/';
+    var webhookUrl = 'https://inshkola.bitrix24.ru/rest/102/nc0p2s0ljcawodiq/';
     
     fetch(webhookUrl + 'sonet_group.user.get.json?ID=' + groupId)
         .then(function(r) { return r.json(); })

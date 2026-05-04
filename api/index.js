@@ -8,151 +8,141 @@ export default async function handler(req, res) {
         return;
     }
 
-    if (req.query.action === 'getUsers') {
-    const ids = req.query.ids; // строка "102,5,8"
     const webhookUrl = process.env.BITRIX_WEBHOOK;
-    try {
-        const response = await fetch(webhookUrl + 'user.get.json?ID=' + ids);
-        const data = await response.json();
-        res.status(200).json(data);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-    return;
-}
 
-    
-    // API: получить участников группы
-    if (req.query.action === 'getGroupUsers') {
-        const groupId = req.query.groupId;
-        const webhookUrl = process.env.BITRIX_WEBHOOK;
-        if (!webhookUrl) {
-            res.status(500).json({ error: 'BITRIX_WEBHOOK env var not set' });
-            return;
-        }
-        try {
-            const response = await fetch(webhookUrl + 'sonet_group.user.get.json?ID=' + groupId);
-            const data = await response.json();
-            res.status(200).json(data);
-        } catch (e) {
-            res.status(500).json({ error: e.message });
-        }
+    if (!webhookUrl) {
+        res.status(500).json({ error: 'BITRIX_WEBHOOK env var not set' });
         return;
     }
 
-    // Главная страница — HTML прямо в коде, без readFileSync
+    // 🔥 ГЛАВНЫЙ endpoint — сразу готовые пользователи проекта
+    if (req.query.action === 'getProjectUsersFull') {
+        const groupId = req.query.groupId;
+
+        try {
+            // 1. Получаем участников группы
+            const groupRes = await fetch(
+                webhookUrl + 'sonet_group.user.get.json?ID=' + groupId
+            );
+            const groupData = await groupRes.json();
+            const members = groupData.result || [];
+
+            if (!members.length) {
+                return res.status(200).json({ result: [] });
+            }
+
+            // 2. Собираем ID пользователей
+            const ids = members.map(m => m.USER_ID);
+
+            // ⚠️ Bitrix иногда требует формат ID[]=1&ID[]=2
+            const query = ids.map(id => 'ID[]=' + id).join('&');
+
+            // 3. Получаем пользователей
+            const usersRes = await fetch(
+                webhookUrl + 'user.get.json?' + query
+            );
+            const usersData = await usersRes.json();
+            const users = usersData.result || [];
+
+            // 4. Нормализуем ответ (чистый массив)
+            const result = users.map(u => ({
+                id: u.ID,
+                name: (u.NAME || '') + ' ' + (u.LAST_NAME || '')
+            }));
+
+            res.status(200).json({ result });
+
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+
+        return;
+    }
+
+    // HTML
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(200).send(`<!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Участники проекта</title>
-    <script src="https://api.bitrix24.com/api/v1/"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 16px;
-            margin: 0;
-            background: #fff;
-        }
-        h3 {
-            font-size: 16px;
-            margin-bottom: 12px;
-            color: #333;
-        }
-        #status {
-            color: #888;
-            font-size: 14px;
-        }
-        #userList {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        #userList li {
-            padding: 6px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-            color: #222;
-        }
-        .error {
-            color: red;
-            font-size: 13px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Участники проекта</title>
+<script src="https://api.bitrix24.com/api/v1/"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    padding: 16px;
+    margin: 0;
+}
+#status { color: #666; }
+li { padding: 4px 0; }
+.error { color: red; }
+</style>
 </head>
+
 <body>
-    <h3>Участники проекта</h3>
-    <div id="status">Загрузка...</div>
-    <ul id="userList"></ul>
+<h3>Участники проекта</h3>
+<div id="status">Загрузка...</div>
+<ul id="userList"></ul>
 
-    <script>
-        BX24.init(function () {
-            var placementInfo = BX24.placement.info();
-            var options = placementInfo.options || {};
-            var taskId = options.taskId || (placementInfo.options && placementInfo.options.ID);
+<script>
+BX24.init(function () {
+    var placementInfo = BX24.placement.info();
+    var options = placementInfo.options || {};
+    var taskId = options.taskId || options.ID;
 
-            if (!taskId) {
-                document.getElementById('status').innerHTML = '<span class="error">Не удалось получить ID задачи.</span>';
-                return;
-            }
+    if (!taskId) {
+        document.getElementById('status').innerHTML = '<span class="error">Нет taskId</span>';
+        return;
+    }
 
-            // Получаем задачу, чтобы узнать groupId
-            BX24.callMethod('tasks.task.get', { taskId: taskId, select: ['GROUP_ID'] }, function (taskResult) {
-                if (taskResult.error()) {
-                    document.getElementById('status').innerHTML = '<span class="error">Ошибка получения задачи: ' + taskResult.error() + '</span>';
-                    return;
-                }
+    // Получаем groupId
+    BX24.callMethod('tasks.task.get', {
+        taskId: taskId,
+        select: ['GROUP_ID']
+    }, function (res) {
 
-                var task = taskResult.data().task;
-                var groupId = task && task.groupId;
-
-                if (!groupId) {
-                    document.getElementById('status').innerHTML = '<span class="error">Задача не привязана к проекту.</span>';
-                    return;
-                }
-
-                // Запрашиваем участников проекта через наш бэкенд
-                fetch('/api/index?action=getGroupUsers&groupId=' + groupId)
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-        var members = data.result || [];
-        var statusEl = document.getElementById('status');
-        var list = document.getElementById('userList');
-
-        if (!members.length) {
-            statusEl.textContent = 'Участников не найдено.';
+        if (res.error()) {
+            document.getElementById('status').innerHTML = '<span class="error">' + res.error() + '</span>';
             return;
         }
 
-        // Собираем массив USER_ID
-        var userIds = members.map(function (m) { return m.USER_ID; });
+        var groupId = res.data().task.groupId;
 
-        // Второй запрос — получаем имена
-        BX24.callMethod('user.get', { ID: userIds }, function (userResult) {
-            if (userResult.error()) {
-                statusEl.innerHTML = '<span class="error">Ошибка получения пользователей: ' + userResult.error() + '</span>';
+        if (!groupId) {
+            document.getElementById('status').innerHTML = '<span class="error">Нет проекта</span>';
+            return;
+        }
+
+        // 🔥 ОДИН запрос вместо двух
+        fetch('/api/index?action=getProjectUsersFull&groupId=' + groupId)
+        .then(r => r.json())
+        .then(data => {
+            var users = data.result || [];
+            var list = document.getElementById('userList');
+            var status = document.getElementById('status');
+
+            if (!users.length) {
+                status.textContent = 'Нет участников';
                 return;
             }
 
-            var users = userResult.data();
-            statusEl.textContent = 'Найдено участников: ' + users.length;
+            status.textContent = 'Найдено: ' + users.length;
 
             users.forEach(function (u) {
                 var li = document.createElement('li');
-                var name = ((u.NAME || '') + ' ' + (u.LAST_NAME || '')).trim();
-                li.textContent = name || u.ID || '—';
+                li.textContent = u.name || u.id;
                 list.appendChild(li);
             });
+        })
+        .catch(err => {
+            document.getElementById('status').innerHTML =
+                '<span class="error">' + err.message + '</span>';
         });
-    })
-    .catch(function (err) {
-        document.getElementById('status').innerHTML = '<span class="error">Ошибка: ' + err.message + '</span>';
     });
-            });
-        });
-    </script>
+});
+</script>
 </body>
 </html>`);
 }

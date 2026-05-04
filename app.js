@@ -41,8 +41,8 @@ BX24.init(function() {
 
 function loadGroupMembers(groupId) {
     BX24.callMethod(
-        'socialnetwork.api.workgroup.getusers',
-        { groupId: groupId, filterId: 'A' },
+        'sonet_group.user.get',
+        { ID: groupId },
         function(result) {
             if (result.error()) {
                 document.getElementById('userList').innerHTML = 
@@ -58,7 +58,7 @@ function loadGroupMembers(groupId) {
             }
             window.allUsers = users.map(function(u) {
                 return {
-                    id: u.USER_ID || u.ID,
+                    id: u.USER_ID,
                     name: ((u.NAME || '') + ' ' + (u.LAST_NAME || '')).trim()
                 };
             });

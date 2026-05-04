@@ -134,10 +134,79 @@ BX24.init(function () {
             status.textContent = 'Найдено: ' + users.length;
 
             users.forEach(function (u) {
-                var li = document.createElement('li');
-                li.textContent = u.name || u.id;
-                list.appendChild(li);
+    var li = document.createElement('li');
+
+    var name = document.createElement('span');
+    name.textContent = u.name || u.id;
+
+    var btnResp = document.createElement('button');
+    btnResp.textContent = 'Сделать исполнителем';
+
+    var btnObs = document.createElement('button');
+    btnObs.textContent = 'Наблюдатель';
+
+    var btnAcc = document.createElement('button');
+    btnAcc.textContent = 'Соисполнитель';
+
+    btnResp.onclick = function () {
+        BX24.callMethod('tasks.task.update', {
+            taskId: taskId,
+            fields: {
+                RESPONSIBLE_ID: u.id
+            }
+        }, function () {
+            alert('Исполнитель назначен');
+        });
+    };
+
+    btnObs.onclick = function () {
+        BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
+            var task = res.data().task;
+            var auditors = task.auditors || [];
+
+            if (!auditors.includes(u.id)) {
+                auditors.push(u.id);
+            }
+
+            BX24.callMethod('tasks.task.update', {
+                taskId: taskId,
+                fields: {
+                    AUDITORS: auditors
+                }
+            }, function () {
+                alert('Добавлен в наблюдатели');
             });
+        });
+    };
+
+    btnAcc.onclick = function () {
+        BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
+            var task = res.data().task;
+            var accomplices = task.accomplices || [];
+
+            if (!accomplices.includes(u.id)) {
+                accomplices.push(u.id);
+            }
+
+            BX24.callMethod('tasks.task.update', {
+                taskId: taskId,
+                fields: {
+                    ACCOMPLICES: accomplices
+                }
+            }, function () {
+                alert('Добавлен в соисполнители');
+            });
+        });
+    };
+
+    li.appendChild(name);
+    li.appendChild(document.createElement('br'));
+    li.appendChild(btnResp);
+    li.appendChild(btnObs);
+    li.appendChild(btnAcc);
+
+    list.appendChild(li);
+});
         })
         .catch(err => {
             document.getElementById('status').innerHTML =

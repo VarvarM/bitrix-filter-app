@@ -47,9 +47,7 @@ BX24.init(function() {
 });
 
 function loadGroupMembers(groupId) {
-    var webhookUrl = 'https://inshkola.bitrix24.ru/rest/102/nc0p2s0ljcawodiq/';
-    
-    fetch(webhookUrl + 'sonet_group.user.get.json?ID=' + groupId)
+    fetch('/api/index?action=getGroupUsers&groupId=' + groupId)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             console.log('sonet response:', data);
@@ -72,6 +70,10 @@ function loadGroupMembers(groupId) {
             });
             document.getElementById('search').style.display = 'block';
             renderUsers(window.allUsers);
+        })
+        .catch(function(e) {
+            document.getElementById('userList').innerHTML = 
+                '<div style="padding:8px;color:red">Ошибка: ' + e.message + '</div>';
         });
 }
 

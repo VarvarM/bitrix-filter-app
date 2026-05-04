@@ -135,93 +135,110 @@ BX24.init(function () {
 
             users.forEach(function (u) {
     var li = document.createElement('li');
+    li.style.display = 'flex';
+    li.style.alignItems = 'center';
+    li.style.justifyContent = 'space-between';
+    li.style.padding = '6px 0';
+    li.style.borderBottom = '1px solid #eee';
 
     var name = document.createElement('span');
     name.textContent = u.name || u.id;
+    name.style.fontSize = '14px';
 
-    var btnResp = document.createElement('button');
-    btnResp.textContent = 'Сделать исполнителем';
+    var actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '6px';
 
-    var btnObs = document.createElement('button');
-    btnObs.textContent = 'Наблюдатель';
+    function createBtn(text) {
+        var btn = document.createElement('button');
+        btn.textContent = text;
+        btn.style.padding = '4px 8px';
+        btn.style.fontSize = '12px';
+        btn.style.border = '1px solid #ccc';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.background = '#f5f5f5';
+        return btn;
+    }
 
-    var btnAcc = document.createElement('button');
-    btnAcc.textContent = 'Соисполнитель';
+    var btnResp = createBtn('Исп.');
+    var btnObs = createBtn('Набл.');
+    var btnAcc = createBtn('Соисп.');
+
+    var status = document.getElementById('status');
 
     btnResp.onclick = function () {
-    var status = document.getElementById('status');
-    status.textContent = 'Назначаем исполнителя...';
+        status.textContent = 'Назначаем исполнителя...';
 
-    BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
-        var task = res.data().task;
+        BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
+            var task = res.data().task;
 
-        var auditors = (task.auditors || []).filter(id => id != u.id);
-        var accomplices = (task.accomplices || []).filter(id => id != u.id);
+            var auditors = (task.auditors || []).filter(id => id != u.id);
+            var accomplices = (task.accomplices || []).filter(id => id != u.id);
 
-        BX24.callMethod('tasks.task.update', {
-            taskId: taskId,
-            fields: {
-                RESPONSIBLE_ID: u.id,
-                AUDITORS: auditors,
-                ACCOMPLICES: accomplices
-            }
-        }, function () {
-            status.textContent = 'Исполнитель назначен: ' + (u.name || u.id);
+            BX24.callMethod('tasks.task.update', {
+                taskId: taskId,
+                fields: {
+                    RESPONSIBLE_ID: u.id,
+                    AUDITORS: auditors,
+                    ACCOMPLICES: accomplices
+                }
+            }, function () {
+                status.textContent = 'Исполнитель: ' + (u.name || u.id);
+            });
         });
-    });
-};
+    };
 
     btnObs.onclick = function () {
-    var status = document.getElementById('status');
-    status.textContent = 'Добавляем в наблюдатели...';
+        status.textContent = 'Добавляем в наблюдатели...';
 
-    BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
-        var task = res.data().task;
-        var auditors = task.auditors || [];
+        BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
+            var task = res.data().task;
+            var auditors = task.auditors || [];
 
-        if (!auditors.includes(u.id)) {
-            auditors.push(u.id);
-        }
-
-        BX24.callMethod('tasks.task.update', {
-            taskId: taskId,
-            fields: {
-                AUDITORS: auditors
+            if (!auditors.includes(u.id)) {
+                auditors.push(u.id);
             }
-        }, function () {
-            status.textContent = 'Наблюдатель: ' + (u.name || u.id);
+
+            BX24.callMethod('tasks.task.update', {
+                taskId: taskId,
+                fields: {
+                    AUDITORS: auditors
+                }
+            }, function () {
+                status.textContent = 'Наблюдатель: ' + (u.name || u.id);
+            });
         });
-    });
-};
+    };
 
     btnAcc.onclick = function () {
-    var status = document.getElementById('status');
-    status.textContent = 'Добавляем в соисполнители...';
+        status.textContent = 'Добавляем в соисполнители...';
 
-    BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
-        var task = res.data().task;
-        var accomplices = task.accomplices || [];
+        BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
+            var task = res.data().task;
+            var accomplices = task.accomplices || [];
 
-        if (!accomplices.includes(u.id)) {
-            accomplices.push(u.id);
-        }
-
-        BX24.callMethod('tasks.task.update', {
-            taskId: taskId,
-            fields: {
-                ACCOMPLICES: accomplices
+            if (!accomplices.includes(u.id)) {
+                accomplices.push(u.id);
             }
-        }, function () {
-            status.textContent = 'Соисполнитель: ' + (u.name || u.id);
+
+            BX24.callMethod('tasks.task.update', {
+                taskId: taskId,
+                fields: {
+                    ACCOMPLICES: accomplices
+                }
+            }, function () {
+                status.textContent = 'Соисполнитель: ' + (u.name || u.id);
+            });
         });
-    });
-};
+    };
+
+    actions.appendChild(btnResp);
+    actions.appendChild(btnObs);
+    actions.appendChild(btnAcc);
 
     li.appendChild(name);
-    li.appendChild(document.createElement('br'));
-    li.appendChild(btnResp);
-    li.appendChild(btnObs);
-    li.appendChild(btnAcc);
+    li.appendChild(actions);
 
     list.appendChild(li);
 });

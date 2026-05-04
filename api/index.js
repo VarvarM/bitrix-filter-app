@@ -149,15 +149,18 @@ BX24.init(function () {
     btnAcc.textContent = 'Соисполнитель';
 
     btnResp.onclick = function () {
-        BX24.callMethod('tasks.task.update', {
-            taskId: taskId,
-            fields: {
-                RESPONSIBLE_ID: u.id
-            }
-        }, function () {
-            alert('Исполнитель назначен');
-        });
-    };
+    var status = document.getElementById('status');
+    status.textContent = 'Назначаем исполнителя...';
+
+    BX24.callMethod('tasks.task.update', {
+        taskId: taskId,
+        fields: {
+            RESPONSIBLE_ID: u.id
+        }
+    }, function () {
+        status.textContent = 'Исполнитель: ' + (u.name || u.id);
+    });
+};
 
     btnObs.onclick = function () {
         BX24.callMethod('tasks.task.get', { taskId: taskId }, function (res) {
